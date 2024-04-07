@@ -83,4 +83,5 @@ add_executable(xv6_riscv_
         user/zombie.c
         LICENSE
         Makefile
-        README)
+        README
+        user/topTest.c)

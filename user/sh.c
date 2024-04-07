@@ -1,9 +1,11 @@
 // Shell.
 
 #include "kernel/types.h"
-#include "user/user.h"
+#include "user.h"
 #include "kernel/fcntl.h"
 #include "kernel/defs.h"
+#include "kernel/proc.h"
+#include "kernel/memlayout.h"
 
 // Parsed command representation
 #define EXEC  1
@@ -28,6 +30,23 @@ void printHistory() {
             else
                 printf( "%d: %s\n", count, cmdFromHistory);
         }
+    }
+}
+
+void printTop(){
+    struct top top_struct;
+    top(&top_struct);
+
+    printf("Total processes: %d  Running processes: %d  Sleeping processes: %d",
+           top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
+
+    printf("\nCPU Size : %d \nTicks : %ld\n", (int) PHYSTOP, top_struct.uptime);
+
+    printf("\nPID   PPID   STATE       NAME");
+    for (int i = 0; i < top_struct.total_process; i++) {
+        printf("\n %d    %d    %s   %s",
+               top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
+               top_struct.p_list[i].state, top_struct.p_list[i].name);
     }
 }
 //////////////////////////////////////////////////////
@@ -184,9 +203,13 @@ main(void)
       continue;
     }
     if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't'
-         && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[7] == '\n') {
+         && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[7] == '6' && buf[8] == '\n') {
           printHistory();
           continue;
+    }
+    if(buf[0] == 't' && buf[1] == 'o' && buf[2] == 'p' && buf[3] == 't' && buf[4] == 'o' && buf[5] == 'p' && buf[6] == '\n'){
+        printTop();
+        continue;
     }
     if(fork1() == 0)
       runcmd(parsecmd(buf));

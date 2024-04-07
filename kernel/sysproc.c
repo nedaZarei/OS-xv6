@@ -97,3 +97,9 @@ uint64 sys_history(void) {
     argint(1, &historyId);
     return history(buffer, historyId);
 }
+// returns 0 if succeeded, -1 if unsuccessful
+int sys_top(void) {
+    struct top top_struct;
+    argaddr(0, (void *)&top_struct);
+    return top(&top_struct);
+}

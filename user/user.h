@@ -1,4 +1,5 @@
 #include "kernel/types.h"
+#include "kernel/proc.h"
 struct stat;
 
 // system calls
@@ -24,6 +25,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int history(char*, int);
+int top(struct top *);
 
 // ulib.c
 int stat(const char*, struct stat*);

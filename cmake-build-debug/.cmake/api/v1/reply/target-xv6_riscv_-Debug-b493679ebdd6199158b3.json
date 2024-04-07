@@ -118,7 +118,8 @@
 				66,
 				69,
 				71,
-				72
+				72,
+				76
 			]
 		}
 	],
@@ -215,7 +216,8 @@
 				66,
 				69,
 				71,
-				72
+				72,
+				76
 			]
 		},
 		{
@@ -667,6 +669,12 @@
 			"backtrace" : 1,
 			"path" : "README",
 			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "user/topTest.c",
+			"sourceGroupIndex" : 1
 		}
 	],
 	"type" : "EXECUTABLE"

@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
@@ -7,6 +8,11 @@
 #include "defs.h"
 
 struct cpu cpus[NCPU];
+struct {
+    struct spinlock lock;
+    struct proc proc[NPROC];
+} ptable;
+
 
 struct proc proc[NPROC];
 
@@ -680,4 +686,42 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+//getting data from the processes table and filling the top struct info
+int top(struct top *top_struct) {
+    struct proc *p;
+    struct proc_info *p_info;
+
+    //system uptime
+    top_struct->uptime = sys_uptime();
+
+    //initializing process counters
+    top_struct->total_process = 0;
+    top_struct->running_process = 0;
+    top_struct->sleeping_process = 0;
+
+    //filling in process information
+    for (p = ptable.proc, p_info = top_struct->p_list; p < &ptable.proc[NPROC]; p++) {
+        if (p->state != UNUSED) {
+            top_struct->total_process++;
+
+            p_info->pid = p->pid;
+            p_info->ppid = (p->parent != NULL) ? p->parent->pid : -1;
+            p_info->state = p->state;
+            safestrcpy(p_info->name, p->name, sizeof(p_info->name));
+            //updating process counters
+            if (p->state == RUNNING) {
+                top_struct->running_process++;
+            } else if (p->state == SLEEPING) {
+                top_struct->sleeping_process++;
+            }
+            p_info++;
+        }
+    }
+    if (copyout(myproc()->pagetable, (uint64 )top_struct, (char *) &top_struct, sizeof(struct top)) < 0) {
+        return -1;
+    }
+    else
+        return 0;
 }
