@@ -1,4 +1,8 @@
 // Saved registers for kernel context switches.
+typedef unsigned long uint64;
+#define NPROC        64  // maximum number of processes
+#define NCPU          8  // maximum number of CPUs
+#define NOFILE       16  // open files per process
 struct context {
   uint64 ra;
   uint64 sp;
@@ -17,7 +21,6 @@ struct context {
   uint64 s10;
   uint64 s11;
 };
-
 // Per-CPU state.
 struct cpu {
   struct proc *proc;          // The process running on this cpu, or null.
@@ -25,6 +28,7 @@ struct cpu {
   int noff;                   // Depth of push_off() nesting.
   int intena;                 // Were interrupts enabled before push_off()?
 };
+
 
 extern struct cpu cpus[NCPU];
 
@@ -80,7 +84,7 @@ struct trapframe {
 };
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
-
+typedef uint64 *pagetable_t; // 512 PTEs
 // Per-process state
 struct proc {
   struct spinlock lock;
@@ -106,18 +110,3 @@ struct proc {
   char name[16];               // Process name (debugging)
 };
 
-struct proc_info{
-    char name[16];
-    int pid;
-    int ppid;
-    enum procstate state;
-};
-struct top{
-    long uptime;
-    int total_process; //total num of processes
-    int running_process; //total num of running processes
-    int sleeping_process; //total num of sleeping processes
-    // a list of proc info including:
-    // pid, parent pid, state of proc(running,sleeping,runnable,unused), name of proc
-    struct proc_info p_list[NPROC];
-};

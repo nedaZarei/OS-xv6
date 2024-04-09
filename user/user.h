@@ -1,7 +1,7 @@
-#include "kernel/types.h"
-#include "kernel/proc.h"
-struct stat;
+typedef unsigned int   uint;
+typedef unsigned long uint64;
 
+struct stat;
 // system calls
 int fork(void);
 int exit(int) __attribute__((noreturn));
@@ -25,7 +25,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int history(char*, int);
-int top(struct top *);
+int top(uint64);
 
 // ulib.c
 int stat(const char*, struct stat*);

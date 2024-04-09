@@ -98,8 +98,9 @@ uint64 sys_history(void) {
     return history(buffer, historyId);
 }
 // returns 0 if succeeded, -1 if unsuccessful
-int sys_top(void) {
-    struct top top_struct;
-    argaddr(0, (void *)&top_struct);
-    return top(&top_struct);
+uint64 sys_top(void) {
+    uint64 top_struct;
+    argaddr(0, &top_struct);
+    //uint64 upTime = sys_uptime();
+    return top(top_struct);
 }

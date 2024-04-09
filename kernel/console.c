@@ -267,6 +267,7 @@ consoleintr(int c)
       if(c == '\n' || c == C('D') || cons.e-cons.r == INPUT_BUF_SIZE){
         // wake up consoleread() if a whole line (or end-of-file)
         // has arrived.
+        addToHistory();
         cons.w = cons.e;
         wakeup(&cons.r);
       }
@@ -302,8 +303,6 @@ int history(char *buffer, int historyId) {
     int tempIndex = (historyBufferArray.lastCommandIndex + historyId) % MAX_HISTORY;
 
     memmove(buffer, historyBufferArray.bufferArr[tempIndex], historyBufferArray.lengthsArr[tempIndex]);
-    //instead of memmove :add null terminator to the end of the string
-    //buffer[historyBufferArray.lengthsArr[tempIndex]] = '\0';
     return 0;
 }
 

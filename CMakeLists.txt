@@ -84,4 +84,6 @@ add_executable(xv6_riscv_
         LICENSE
         Makefile
         README
-        user/topTest.c)
+        user/topTest.c
+        kernel/topStruct.h
+)

@@ -4,15 +4,11 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "spinlock.h"
-#include "proc.h"
 #include "defs.h"
+#include "proc.h"
+#include "topStruct.h"
 
 struct cpu cpus[NCPU];
-struct {
-    struct spinlock lock;
-    struct proc proc[NPROC];
-} ptable;
-
 
 struct proc proc[NPROC];
 
@@ -689,26 +685,46 @@ procdump(void)
 }
 
 //getting data from the processes table and filling the top struct info
-int top(struct top *top_struct) {
+int top(uint64 tp) {
+    struct top *top_struct = (struct top *) tp;
     struct proc *p;
     struct proc_info *p_info;
 
     //system uptime
-    top_struct->uptime = sys_uptime();
-
+    top_struct->uptime = (long)sys_uptime();
     //initializing process counters
     top_struct->total_process = 0;
     top_struct->running_process = 0;
     top_struct->sleeping_process = 0;
 
     //filling in process information
-    for (p = ptable.proc, p_info = top_struct->p_list; p < &ptable.proc[NPROC]; p++) {
+    for (p =proc, p_info = top_struct->p_list; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
         if (p->state != UNUSED) {
             top_struct->total_process++;
 
             p_info->pid = p->pid;
             p_info->ppid = (p->parent != NULL) ? p->parent->pid : -1;
-            p_info->state = p->state;
+            switch(p->state){
+                case UNUSED:
+                    safestrcpy(p_info->state, "UNUSED", sizeof(p_info->name));
+                    break;
+                case USED:
+                    safestrcpy(p_info->state, "USED", sizeof(p_info->name));
+                    break;
+                case SLEEPING:
+                    safestrcpy(p_info->state, "SLEEPING", sizeof(p_info->name));
+                    break;
+                case RUNNABLE:
+                    safestrcpy(p_info->state, "RUNNABLE", sizeof(p_info->name));
+                    break;
+                case RUNNING:
+                    safestrcpy(p_info->state, "RUNNING", sizeof(p_info->name));
+                    break;
+                case ZOMBIE:
+                    safestrcpy(p_info->state, "ZOMBIE", sizeof(p_info->name));
+                    break;
+            }
             safestrcpy(p_info->name, p->name, sizeof(p_info->name));
             //updating process counters
             if (p->state == RUNNING) {
@@ -718,6 +734,7 @@ int top(struct top *top_struct) {
             }
             p_info++;
         }
+        release(&p->lock);
     }
     if (copyout(myproc()->pagetable, (uint64 )top_struct, (char *) &top_struct, sizeof(struct top)) < 0) {
         return -1;

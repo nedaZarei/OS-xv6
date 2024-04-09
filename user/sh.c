@@ -3,9 +3,9 @@
 #include "kernel/types.h"
 #include "user.h"
 #include "kernel/fcntl.h"
-#include "kernel/defs.h"
-#include "kernel/proc.h"
+#include "kernel/topStruct.h"
 #include "kernel/memlayout.h"
+
 
 // Parsed command representation
 #define EXEC  1
@@ -35,7 +35,7 @@ void printHistory() {
 
 void printTop(){
     struct top top_struct;
-    top(&top_struct);
+    top((uint64) &top_struct);
 
     printf("Total processes: %d  Running processes: %d  Sleeping processes: %d",
            top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
@@ -204,10 +204,12 @@ main(void)
     }
     if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't'
          && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[7] == '6' && buf[8] == '\n') {
+          printf("my history command:");
           printHistory();
           continue;
     }
     if(buf[0] == 't' && buf[1] == 'o' && buf[2] == 'p' && buf[3] == 't' && buf[4] == 'o' && buf[5] == 'p' && buf[6] == '\n'){
+        printf("my top command:");
         printTop();
         continue;
     }

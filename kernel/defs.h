@@ -8,6 +8,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct proc_info;
 struct top;
 // bio.c
 void            binit(void);
@@ -22,6 +23,8 @@ void            consoleinit(void);
 void            consoleintr(int);
 void            consputc(int);
 int             history(char *buffer, int historyId);
+void            addToHistory(void);
+
 
 // exec.c
 int             exec(char*, char**);
@@ -108,7 +111,7 @@ int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 uint64          sys_uptime(void);
-int             top(struct top *top_struct);
+int             top(uint64);
 
 
 // swtch.S
