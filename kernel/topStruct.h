@@ -3,7 +3,7 @@ struct proc_info{
     char name[16];
     int pid;
     int ppid;
-    char state[];
+    char state[16];
 };
 struct top{
     long uptime;

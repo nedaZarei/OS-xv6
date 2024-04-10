@@ -14,42 +14,8 @@
 #define LIST  4
 #define BACK  5
 #define MAXARGS 10
-/////////////////////////////////////////////////////printing the result of typing history in cmd
-#define MAX_HISTORY 16
-#define INPUT_BUF 128
-char cmdFromHistory[INPUT_BUF]; //this is the buffer that will get the current history command from history
 
-void printHistory() {
-    int i, count = 0;
-    for (i = 0; i < MAX_HISTORY; i++) {
-        // 0 == newest command == historyId (always)
-        if (history(cmdFromHistory, MAX_HISTORY - i - 1) == 0) { // this is the sys call
-            count++;
-            if (count < 10)
-                printf(" %d: %s\n", count, cmdFromHistory);
-            else
-                printf( "%d: %s\n", count, cmdFromHistory);
-        }
-    }
-}
 
-void printTop(){
-    struct top top_struct;
-    top((uint64) &top_struct);
-
-    printf("Total processes: %d  Running processes: %d  Sleeping processes: %d",
-           top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
-
-    printf("\nCPU Size : %d \nTicks : %ld\n", (int) PHYSTOP, top_struct.uptime);
-
-    printf("\nPID   PPID   STATE       NAME");
-    for (int i = 0; i < top_struct.total_process; i++) {
-        printf("\n %d    %d    %s   %s",
-               top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
-               top_struct.p_list[i].state, top_struct.p_list[i].name);
-    }
-}
-//////////////////////////////////////////////////////
 struct cmd {
   int type;
 };
@@ -178,6 +144,43 @@ getcmd(char *buf, int nbuf)
     return -1;
   return 0;
 }
+///////////////////////////////////////////////////////////////////////////
+#define MAX_HISTORY 16
+#define INPUT_BUF 128
+
+char cmdFromHistory[INPUT_BUF]; //this is the buffer that will get the current history command from history
+void printHistory() {
+    int i, count = 0;
+    for (i = 0; i < MAX_HISTORY; i++) {
+        // 0 == newest command == historyId (always)
+        if (history(cmdFromHistory, MAX_HISTORY - i - 1) == 0) { // this is the sys call
+            count++;
+
+            if (count < 5)
+                printf(" %d: %s\n", count, cmdFromHistory);
+            else
+                break;
+        }
+    }
+}
+
+void printTop(){
+    struct top top_struct;
+    top((uint64) &top_struct);
+
+    printf("Total processes: %d  Running processes: %d  Sleeping processes: %d",
+           top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
+
+    printf("\nCPU Size : %d \nTicks : %ld\n", (int) PHYSTOP, top_struct.uptime);
+
+    printf("\nPID   PPID   STATE       NAME");
+    for (int i = 0; i < top_struct.total_process; i++) {
+        printf("\n %d    %d    %s   %s",
+               top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
+               top_struct.p_list[i].state, top_struct.p_list[i].name);
+    }
+}
+////////////////////////////////////////////////////////////////////////
 
 int
 main(void)
@@ -203,16 +206,16 @@ main(void)
       continue;
     }
     if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't'
-         && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[7] == '6' && buf[8] == '\n') {
-          printf("my history command:");
+         && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[7] == '\n') {
+          printf("my history command:\n");
           printHistory();
           continue;
     }
     if(buf[0] == 't' && buf[1] == 'o' && buf[2] == 'p' && buf[3] == 't' && buf[4] == 'o' && buf[5] == 'p' && buf[6] == '\n'){
-        printf("my top command:");
-        printTop();
-        continue;
-    }
+          printf("my top command:\n");
+          printTop();
+          continue;
+      }
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(0);

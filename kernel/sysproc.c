@@ -89,6 +89,7 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+#define MAX_HISTORY 16
 // returns 0 if succeeded, 1 if no history in the historyId given, 2 if illegal history id
 uint64 sys_history(void) {
     char *buffer;
@@ -96,11 +97,27 @@ uint64 sys_history(void) {
     argaddr(0, (uint64 *) &buffer);
     argint(1, &historyId);
     return history(buffer, historyId);
+//    int n = history(buffer, historyId);
+//    if(n != 0 ){
+//        return n;
+//    }
+//
+//    int i, count = 0;
+//    for (i = 0; i < MAX_HISTORY; i++) {
+//        // 0 == newest command == historyId (always)
+//        if (history(buffer, MAX_HISTORY - i - 1) == 0) {
+//            count++;
+//            if (count < 5)
+//                printf(" %d: %s\n", count, buffer);
+//            else
+//                break;
+//        }
+//    }
+//    return 0;
 }
 // returns 0 if succeeded, -1 if unsuccessful
 uint64 sys_top(void) {
     uint64 top_struct;
     argaddr(0, &top_struct);
-    //uint64 upTime = sys_uptime();
     return top(top_struct);
 }
