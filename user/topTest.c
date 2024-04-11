@@ -10,11 +10,11 @@ int main(int argc, char **argv){
     printf("Total processes: %d  Running processes: %d  Sleeping processes: %d",
            top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
 
-    printf("\nCPU Size : %d \nTicks : %ld\n", (int) PHYSTOP, top_struct.uptime);
+    printf("\nTicks : %ld\n",top_struct.uptime);
 
-    printf("\nPID   PPID   STATE       NAME");
+    printf("\nPID   PPID   STATE       NAME\n");
     for (int i = 0; i < top_struct.total_process; i++) {
-        printf("\n %d    %d    %s   %s",
+        printf("%d    %d    %s   %s\n",
                 top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
                 top_struct.p_list[i].state, top_struct.p_list[i].name);
     }

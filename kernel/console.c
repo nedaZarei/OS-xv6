@@ -271,7 +271,7 @@ consoleintr(int c)
           for (i = 0; i < placestoshift; i++) {
               consputc(LEFT);
           }
-          memset(buf2, '\0', INPUT_BUF);
+          memset(buf2, 0, INPUT_BUF);
           for (i = 0; i < numtoshift; i++) {
               buf2[i] = cons.buf[(cons.w + i + placestoshift) % INPUT_BUF];
           }
@@ -402,8 +402,9 @@ int history(char *buffer, int historyId) {
         return 2;//illegal history id
     if (historyId >= historyBufferArray.numOfCommmandsInMem)
         return 1;//no history in the historyId given
+
     //historyId != index of command in historyBufferArray.bufferArr
-    memset(buffer, '\0', INPUT_BUF);
+    memset(buffer, 0, INPUT_BUF);
 
     int tempIndex = (historyBufferArray.lastCommandIndex + historyId) % MAX_HISTORY;
 

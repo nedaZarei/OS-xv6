@@ -686,22 +686,22 @@ procdump(void)
 
 //getting data from the processes table and filling the top struct info
 int top(uint64 tp) {
-    struct top *top_struct = (struct top *) tp;
+    struct top top_struct;
     struct proc *p;
     struct proc_info *p_info;
 
     //system uptime
-    top_struct->uptime = (long)sys_uptime();
+    top_struct.uptime = (long) ticks / 100;
     //initializing process counters
-    top_struct->total_process = 0;
-    top_struct->running_process = 0;
-    top_struct->sleeping_process = 0;
+    top_struct.total_process = 0;
+    top_struct.running_process = 0;
+    top_struct.sleeping_process = 0;
 
     //filling in process information
-    for (p =proc, p_info = top_struct->p_list; p < &proc[NPROC]; p++) {
+    for (p =proc, p_info = top_struct.p_list; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
         if (p->state != UNUSED) {
-            top_struct->total_process++;
+            top_struct.total_process++;
 
             p_info->pid = p->pid;
             p_info->ppid = (p->parent != NULL) ? p->parent->pid : -1;
@@ -728,15 +728,15 @@ int top(uint64 tp) {
             safestrcpy(p_info->name, p->name, sizeof(p_info->name));
             //updating process counters
             if (p->state == RUNNING) {
-                top_struct->running_process++;
+                top_struct.running_process++;
             } else if (p->state == SLEEPING) {
-                top_struct->sleeping_process++;
+                top_struct.sleeping_process++;
             }
             p_info++;
         }
         release(&p->lock);
     }
-    if (copyout(myproc()->pagetable, (uint64 )top_struct, (char *) &top_struct, sizeof(struct top)) < 0) {
+    if (copyout(myproc()->pagetable, tp, (char *) &top_struct, sizeof(struct top)) < 0) {
         return -1;
     }
     else
