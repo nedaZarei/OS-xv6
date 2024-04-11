@@ -21,9 +21,7 @@
 #include "defs.h"
 #include "proc.h"
 #define BACKSPACE 0x100
-#define UP_key 0xff52
-#define DOWN_key 0xff54
-#define LEFT_key 0xff51
+#define LEFT_KEY 0xff51
 
 #define C(x)  ((x)-'@')  // Control-x
 
@@ -45,7 +43,7 @@ consputc(int c)
 
 struct {
   struct spinlock lock;
-  
+
   // input
 #define INPUT_BUF_SIZE 128
   char buf[INPUT_BUF_SIZE];
@@ -136,7 +134,7 @@ void rightShiftBuffer() {
     // return the caret to its correct position
     int i = n;
     while (i--) {
-        consputc(LEFT_key);
+        consputc(LEFT_KEY);
     }
 }
 
@@ -150,7 +148,7 @@ void leftShiftBuffer() {
      * @cursor (display) : @pos in cgaputc
      */
     uint n = cons.rightmost - cons.e;
-    consputc(LEFT_key); // cursor (display) is b/w b and c
+    consputc(LEFT_KEY); // cursor (display) is b/w b and c
     cons.e--; // set the backend part of cursor to the final correct position
 
     // abcdef -> abdeff
@@ -166,7 +164,7 @@ void leftShiftBuffer() {
     // set the cursor (display) to the correct position
     int i = n + 1;
     while (i--){
-        consputc(LEFT_key); // shift the caret back to the left
+        consputc(LEFT_KEY); // shift the caret back to the left
     }
 
     // at this point, the cursor (display) i.e. pos is in sync with input.e
@@ -253,141 +251,169 @@ consoleread(int user_dst, uint64 dst, int n)
 // do erase/kill processing, append to cons.buf,
 // wake up consoleread() if a whole line has arrived.
 //
-void
-consoleintr(int c)
-{
-  acquire(&cons.lock);
-  uint index;
+void consoleintr(int c) {
+    acquire(&cons.lock);
+    uint index;
 
-    switch(c){
-  case C('P'):  // Print process list.
-    procdump();
-    break;
-  case C('U'):  // Kill line.
-      if (cons.rightmost > cons.e) { // caret isn't at the end of the line
-          uint numtoshift = cons.rightmost - cons.e;
-          uint placestoshift = cons.e - cons.w;
-          uint i;
-          for (i = 0; i < placestoshift; i++) {
-              consputc(LEFT_key);
-          }
-          memset(buf2, 0, INPUT_BUF);
-          for (i = 0; i < numtoshift; i++) {
-              buf2[i] = cons.buf[(cons.w + i + placestoshift) % INPUT_BUF];
-          }
-          for (i = 0; i < numtoshift; i++) {
-              cons.buf[(cons.w + i) % INPUT_BUF] = buf2[i];
-          }
-          cons.e -= placestoshift;
-          cons.rightmost -= placestoshift;
-          for (i = 0; i < numtoshift; i++) { // repaint the chars
-              consputc(cons.buf[(cons.e + i) % INPUT_BUF]);
-          }
-          for (i = 0; i < placestoshift; i++) { // erase the leftover chars
-              consputc(' ');
-          }
-          for (i = 0; i < placestoshift + numtoshift; i++) { // move the caret back to the left
-              consputc(LEFT_key);
-          }
-      }
-      else { // caret is at the end of the line -  ( deleting everything from both screen and inputbuf)
-          while(cons.e != cons.w &&
-                  cons.buf[(cons.e - 1) % INPUT_BUF] != '\n'){
-              cons.e--;
-              cons.rightmost--;
-              consputc(BACKSPACE);
-          }
-      }
-    break;
-  case C('H'): // Backspace
-  case '\x7f': // Delete key
-      if (cons.rightmost != cons.e && cons.e != cons.w) { // caret isn't at the end of the line
-          leftShiftBuffer();
-          break;
-      }
-            if(cons.e != cons.w){ // caret is at the end of the line - deleting last char
-                cons.e--;
-                cons.rightmost--;
-                consputc(BACKSPACE);
+    static int escape_seq_state = 0;
+
+    switch (escape_seq_state) {
+        case 0: //initial state
+            if (c == 27) { //check for the escape character
+                escape_seq_state = 1;
+            } else {
+                //process regular characters
+                switch (c) {
+                    case C('P'):  // Print process list.
+                        procdump();
+                        break;
+                    case C('U'):  // Kill line.
+                        if (cons.rightmost > cons.e) { //caret isn't at the end of the line
+                            uint numtoshift = cons.rightmost - cons.e;
+                            uint placestoshift = cons.e - cons.w;
+                            uint i;
+                            for (i = 0; i < placestoshift; i++) {
+                                consputc(LEFT_KEY);
+                            }
+                            memset(buf2, 0, INPUT_BUF);
+                            for (i = 0; i < numtoshift; i++) {
+                                buf2[i] = cons.buf[(cons.w + i + placestoshift) % INPUT_BUF];
+                            }
+                            for (i = 0; i < numtoshift; i++) {
+                                cons.buf[(cons.w + i) % INPUT_BUF] = buf2[i];
+                            }
+                            cons.e -= placestoshift;
+                            cons.rightmost -= placestoshift;
+                            for (i = 0; i < numtoshift; i++) { //repaint the chars
+                                consputc(cons.buf[(cons.e + i) % INPUT_BUF]);
+                            }
+                            for (i = 0; i < placestoshift; i++) { //erase the leftover chars
+                                consputc(' ');
+                            }
+                            for (i = 0; i < placestoshift + numtoshift; i++) { //move the caret back to the left
+                                consputc(LEFT_KEY);
+                            }
+                        }
+                        else { //caret is at the end of the line( deleting everything from both screen and inputbuf)
+                            while(cons.e != cons.w &&
+                                  cons.buf[(cons.e - 1) % INPUT_BUF] != '\n'){
+                                cons.e--;
+                                cons.rightmost--;
+                                consputc(BACKSPACE);
+                            }
+                        }
+                        break;
+                    case C('H'): // Backspace
+                    case '\x7f': // Delete key
+                        if (cons.rightmost != cons.e && cons.e != cons.w) { //caret isn't at the end of the line
+                            leftShiftBuffer();
+                            break;
+                        }
+                        if(cons.e != cons.w){ //caret is at the end of the line - deleting last char
+                            cons.e--;
+                            cons.rightmost--;
+                            consputc(BACKSPACE);
+                        }
+                        break;
+                    default:
+                        if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
+                            c = (c == '\r') ? '\n' : c;
+                            if (cons.rightmost > cons.e) { //caret isn't at the end of the line
+                                copyCharsToBeMoved();
+                                cons.buf[cons.e % INPUT_BUF] = c;
+                                cons.e++;
+                                cons.rightmost++;
+                                consputc(c);
+                                rightShiftBuffer();
+                            }
+                            else {
+                                cons.buf[cons.e % INPUT_BUF] = c;
+                                cons.e++;
+                                cons.rightmost = cons.e - cons.rightmost == 1 ? cons.e : cons.rightmost;
+                                consputc(c);
+                            }
+                            if(c == '\n' || c == C('D') || cons.rightmost == cons.r + INPUT_BUF){
+                                // wake up consoleread() if a whole line (or end-of-file) has arrived.
+                                //checking if the entered command is not "history" before adding to history
+                                uint len = cons.rightmost - cons.r - 1; //length of command to be saved (-1 is for removing the last '\n')
+                                if (len > 0) {
+                                    char *command = &cons.buf[cons.r % INPUT_BUF];
+                                    if (len != 7 || strncmp(command, "history", len) != 0) {
+                                        addToHistory();
+                                    }
+                                }
+                                cons.w = cons.rightmost;
+                                wakeup(&cons.r);
+                            }
+                        }
+                        break;
+                }
             }
-    break;
-    case UP_key:
-          if (historyBufferArray.currentHistory < historyBufferArray.numOfCommmandsInMem - 1) {
-              deleteLineScreen();
+            break;
 
-              //storing the currently entered command (in the terminal) to the oldBuf
-              if (historyBufferArray.currentHistory == -1)
-                  copyCharsIntoOldBuff();
+        case 1: //expecting second character of escape sequence
+            if (c == 91) { // Check for '[' character
+                escape_seq_state = 2;
+            } else {
+                //tot a valid escape sequence, reset state
+                escape_seq_state = 0;
+            }
+            break;
 
-              eraseInputBuff();
-              historyBufferArray.currentHistory++;
-              index = (historyBufferArray.lastCommandIndex + historyBufferArray.currentHistory) % MAX_HISTORY;
-              printBuffScreen(historyBufferArray.bufferArr[index],
-                              historyBufferArray.lengthsArr[index]);
-              copyBuffToInputBuff(historyBufferArray.bufferArr[index],
-                                  historyBufferArray.lengthsArr[index]);
-          }
-          break;
-      case DOWN_key:
-          switch (historyBufferArray.currentHistory) {
-              case -1:
-                  //do nothing
-                  break;
+        case 2: //expecting third character of escape sequence
+            switch (c) {
+                case 65: // Up arrow key
+                    if (historyBufferArray.currentHistory < historyBufferArray.numOfCommmandsInMem - 1) {
+                        deleteLineScreen();
 
-              case 0: //get string from oldBuf
-                  deleteLineScreen();
-                  copyBuffToInputBuff(oldBuf, oldBuffLen);
-                  printBuffScreen(oldBuf, oldBuffLen);
-                  historyBufferArray.currentHistory--;
-                  break;
+                        //storing the currently entered command (in the terminal) to the oldBuf
+                        if (historyBufferArray.currentHistory == -1)
+                            copyCharsIntoOldBuff();
 
-              default:
-                  deleteLineScreen();
-                  historyBufferArray.currentHistory--;
-                  index = (historyBufferArray.lastCommandIndex + historyBufferArray.currentHistory) %
-                          MAX_HISTORY;
-                  printBuffScreen(historyBufferArray.bufferArr[index],
-                                  historyBufferArray.lengthsArr[index]);
-                  copyBuffToInputBuff(historyBufferArray.bufferArr[index],
-                                      historyBufferArray.lengthsArr[index]);
-                  break;
-          }
-          break;
-  default:
-    if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
-      c = (c == '\r') ? '\n' : c;
-      if (cons.rightmost > cons.e) { // caret isn't at the end of the line
-          copyCharsToBeMoved();
-          cons.buf[cons.e % INPUT_BUF] = c;
-          cons.e++;
-          cons.rightmost++;
-          consputc(c);
-          rightShiftBuffer();
-      }
-      else {
-          cons.buf[cons.e % INPUT_BUF] = c;
-          cons.e++;
-          cons.rightmost = cons.e - cons.rightmost == 1 ? cons.e : cons.rightmost;
-          consputc(c);
-      }
-      if(c == '\n' || c == C('D') || cons.rightmost == cons.r + INPUT_BUF){
-        // wake up consoleread() if a whole line (or end-of-file) has arrived.
-        //checking if the entered command is not "history" before adding to history
-        uint len = cons.rightmost - cons.r - 1; //length of command to be saved (-1 is for removing the last '\n')
-        if (len > 0) {
-              char *command = &cons.buf[cons.r % INPUT_BUF];
-              if (len != 7 || strncmp(command, "history", len) != 0) {
-                  addToHistory();
-              }
-        }
-        cons.w = cons.rightmost;
-        wakeup(&cons.r);
-      }
+                        eraseInputBuff();
+                        historyBufferArray.currentHistory++;
+                        index = (historyBufferArray.lastCommandIndex + historyBufferArray.currentHistory) % MAX_HISTORY;
+                        printBuffScreen(historyBufferArray.bufferArr[index],
+                                        historyBufferArray.lengthsArr[index]);
+                        copyBuffToInputBuff(historyBufferArray.bufferArr[index],
+                                            historyBufferArray.lengthsArr[index]);
+                    }
+                    break;
+                case 66: // Down arrow key
+                    switch (historyBufferArray.currentHistory)
+                    {
+                        case -1:
+                            //do nothing
+                            break;
+
+                        case 0: //get string from oldBuf
+                            deleteLineScreen();
+                            copyBuffToInputBuff(oldBuf, oldBuffLen);
+                            printBuffScreen(oldBuf, oldBuffLen);
+                            historyBufferArray.currentHistory--;
+                            break;
+
+                        default:
+                            deleteLineScreen();
+                            historyBufferArray.currentHistory--;
+                            index = (historyBufferArray.lastCommandIndex + historyBufferArray.currentHistory) %
+                                    MAX_HISTORY;
+                            printBuffScreen(historyBufferArray.bufferArr[index],
+                                            historyBufferArray.lengthsArr[index]);
+                            copyBuffToInputBuff(historyBufferArray.bufferArr[index],
+                                                historyBufferArray.lengthsArr[index]);
+                            break;
+                    }
+                    break;
+            }
+            //resetting state after handling escape sequence
+            escape_seq_state = 0;
+            break;
     }
-    break;
-  }
-  release(&cons.lock);
+
+    release(&cons.lock);
 }
+
 
 void
 consoleinit(void)
@@ -414,7 +440,7 @@ int history(char *buffer, int historyId) {
     int tempIndex = (historyBufferArray.lastCommandIndex + historyId) % MAX_HISTORY;
     char *src = historyBufferArray.bufferArr[tempIndex];
 
-    printf(" %d:  %s\n" ,historyId, src);
+    printf(" %d:  %s\n" ,historyBufferArray.numOfCommmandsInMem - historyId, src);
 
     int length = historyBufferArray.lengthsArr[tempIndex];
     //copy at most INPUT_BUF - 1 characters to leave room for null termination
