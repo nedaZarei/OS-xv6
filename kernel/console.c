@@ -105,21 +105,19 @@ printBuffScreen(char* bufToPrintOnScreen, uint length) {
         i++;
     }
 }
-char charsToBeMoved[INPUT_BUF];  // temporary storage for input.buf in a certain context
+char charsToBeMoved[INPUT_BUF]; //temporary storage for input.buf in a certain context
 
-/*
-Store input.buf into charsToBeMoved (to use later)
-Called when a new key is pressed and the cursor is not at EOL
-*/
+
+//Store input.buf into charsToBeMoved (to use later)
+//called when a new key is pressed and the cursor is not at EOL
 void copyCharsToBeMoved() {
     for (uint i = 0; i < (uint)(cons.rightmost - cons.r); i++) {
         charsToBeMoved[i] = cons.buf[(cons.e + i) % INPUT_BUF];
     }
 }
-/*
-Shift input.buf (backend) to the right by one unit and print the same on-screen (front-end)
-Called when a new key is pressed and the cursor is not at EOL
-*/
+
+//Shift input.buf to the right by one unit and print the same on-screen
+//called when a new key is pressed and the cursor is not at EOL
 void rightShiftBuffer() {
     uint n = cons.rightmost - cons.e;
     for (uint i = 0; i < n; i++) {
@@ -127,36 +125,31 @@ void rightShiftBuffer() {
         consputc(charsToBeMoved[i]);
     }
 
-    // reset charsToBeMoved for further use
+    //reset charsToBeMoved for further use
     for(uint i = 0; i < INPUT_BUF; i++) {
         charsToBeMoved[i] = '\0';
     }
-    // return the caret to its correct position
+    //return the caret to its correct position
     int i = n;
     while (i--) {
         consputc(LEFT_KEY);
     }
 }
 
-/*
-Shift input.buf (backend) to the left by one unit and print the same on-screen (front-end)
-Called when a BACKSPACE is pressed and the cursor is not at EOL
-*/
+
+//Shift input.buf to the left by one unit and print the same on-screen
+//called when a BACKSPACE is pressed and the cursor is not at EOL
 void leftShiftBuffer() {
-    /**
-     * For Ex: Input is abcdef and cursor is b/w c and d.
-     * @cursor (display) : @pos in cgaputc
-     */
     uint n = cons.rightmost - cons.e;
     consputc(LEFT_KEY); // cursor (display) is b/w b and c
     cons.e--; // set the backend part of cursor to the final correct position
 
-    // abcdef -> abdeff
+    //abcdef -> abdeff
     for (uint i = 0; i < n; i++) {
         cons.buf[(cons.e + i) % INPUT_BUF] = cons.buf[(cons.e + i + 1) % INPUT_BUF];
         consputc(cons.buf[(cons.e + i + 1) % INPUT_BUF]);
     }
-    // cursor (display) is b/w f and f
+    //cursor (display) is b/w f and f
 
     cons.rightmost--; // set input.rightmost to the final correct position
     consputc(' '); // delete the last char in line and advance cursor (display) by 1
@@ -169,7 +162,7 @@ void leftShiftBuffer() {
 
     // at this point, the cursor (display) i.e. pos is in sync with input.e
 }
-char buf2[INPUT_BUF];
+char bufff[INPUT_BUF];
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // user write()s to the console go here.
@@ -275,12 +268,12 @@ void consoleintr(int c) {
                             for (i = 0; i < placestoshift; i++) {
                                 consputc(LEFT_KEY);
                             }
-                            memset(buf2, 0, INPUT_BUF);
+                            memset(bufff, 0, INPUT_BUF);
                             for (i = 0; i < numtoshift; i++) {
-                                buf2[i] = cons.buf[(cons.w + i + placestoshift) % INPUT_BUF];
+                                bufff[i] = cons.buf[(cons.w + i + placestoshift) % INPUT_BUF];
                             }
                             for (i = 0; i < numtoshift; i++) {
-                                cons.buf[(cons.w + i) % INPUT_BUF] = buf2[i];
+                                cons.buf[(cons.w + i) % INPUT_BUF] = bufff[i];
                             }
                             cons.e -= placestoshift;
                             cons.rightmost -= placestoshift;
