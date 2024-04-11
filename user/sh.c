@@ -156,7 +156,7 @@ void printHistory() {
             count++;
 
             if (count < 5)
-                printf(" %d: %s\n", count, cmdFromHistory);
+                printf("\n");
             else
                 break;
         }
@@ -206,12 +206,12 @@ main(void)
     }
     if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't'
          && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[7] == '\n') {
-          printf("my history command:\n");
+          printf("\nmy history command:\n");
           printHistory();
           continue;
     }
-    if(buf[0] == 't' && buf[1] == 'o' && buf[2] == 'p' && buf[3] == 't' && buf[4] == 'o' && buf[5] == 'p' && buf[6] == '\n'){
-          printf("my top command:\n");
+    if(buf[0] == 't' && buf[1] == 'o' && buf[2] == 'p' && buf[3] == '\n'){
+          printf("\nmy top command:\n");
           printTop();
           continue;
       }

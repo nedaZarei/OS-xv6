@@ -9,7 +9,6 @@
 //   control-p -- print process list
 //
 
-#include <stdarg.h>
 
 #include "types.h"
 #include "param.h"
@@ -22,6 +21,9 @@
 #include "defs.h"
 #include "proc.h"
 #define BACKSPACE 0x100
+#define UP_key 0xff52
+#define DOWN_key 0xff54
+#define LEFT_key 0xff51
 
 #define C(x)  ((x)-'@')  // Control-x
 
@@ -67,8 +69,6 @@ struct {
 //for holding the details of the command that we were typing before accessing the history
 char oldBuf[INPUT_BUF];
 uint oldBuffLen;
-#define UP 226
-#define DOWN 227
 
 void
 deleteLineScreen(void) { //delete curr line form screen
@@ -108,7 +108,7 @@ printBuffScreen(char* bufToPrintOnScreen, uint length) {
     }
 }
 char charsToBeMoved[INPUT_BUF];  // temporary storage for input.buf in a certain context
-#define LEFT 228
+
 /*
 Store input.buf into charsToBeMoved (to use later)
 Called when a new key is pressed and the cursor is not at EOL
@@ -136,7 +136,7 @@ void rightShiftBuffer() {
     // return the caret to its correct position
     int i = n;
     while (i--) {
-        consputc(LEFT);
+        consputc(LEFT_key);
     }
 }
 
@@ -150,7 +150,7 @@ void leftShiftBuffer() {
      * @cursor (display) : @pos in cgaputc
      */
     uint n = cons.rightmost - cons.e;
-    consputc(LEFT); // cursor (display) is b/w b and c
+    consputc(LEFT_key); // cursor (display) is b/w b and c
     cons.e--; // set the backend part of cursor to the final correct position
 
     // abcdef -> abdeff
@@ -166,7 +166,7 @@ void leftShiftBuffer() {
     // set the cursor (display) to the correct position
     int i = n + 1;
     while (i--){
-        consputc(LEFT); // shift the caret back to the left
+        consputc(LEFT_key); // shift the caret back to the left
     }
 
     // at this point, the cursor (display) i.e. pos is in sync with input.e
@@ -269,7 +269,7 @@ consoleintr(int c)
           uint placestoshift = cons.e - cons.w;
           uint i;
           for (i = 0; i < placestoshift; i++) {
-              consputc(LEFT);
+              consputc(LEFT_key);
           }
           memset(buf2, 0, INPUT_BUF);
           for (i = 0; i < numtoshift; i++) {
@@ -287,7 +287,7 @@ consoleintr(int c)
               consputc(' ');
           }
           for (i = 0; i < placestoshift + numtoshift; i++) { // move the caret back to the left
-              consputc(LEFT);
+              consputc(LEFT_key);
           }
       }
       else { // caret is at the end of the line -  ( deleting everything from both screen and inputbuf)
@@ -311,7 +311,7 @@ consoleintr(int c)
                 consputc(BACKSPACE);
             }
     break;
-    case UP:
+    case UP_key:
           if (historyBufferArray.currentHistory < historyBufferArray.numOfCommmandsInMem - 1) {
               deleteLineScreen();
 
@@ -328,7 +328,7 @@ consoleintr(int c)
                                   historyBufferArray.lengthsArr[index]);
           }
           break;
-      case DOWN:
+      case DOWN_key:
           switch (historyBufferArray.currentHistory) {
               case -1:
                   //do nothing
@@ -371,9 +371,15 @@ consoleintr(int c)
           consputc(c);
       }
       if(c == '\n' || c == C('D') || cons.rightmost == cons.r + INPUT_BUF){
-        // wake up consoleread() if a whole line (or end-of-file)
-        // has arrived.
-        addToHistory();
+        // wake up consoleread() if a whole line (or end-of-file) has arrived.
+        //checking if the entered command is not "history" before adding to history
+        uint len = cons.rightmost - cons.r - 1; //length of command to be saved (-1 is for removing the last '\n')
+        if (len > 0) {
+              char *command = &cons.buf[cons.r % INPUT_BUF];
+              if (len != 7 || strncmp(command, "history", len) != 0) {
+                  addToHistory();
+              }
+        }
         cons.w = cons.rightmost;
         wakeup(&cons.r);
       }
@@ -404,11 +410,20 @@ int history(char *buffer, int historyId) {
         return 1;//no history in the historyId given
 
     //historyId != index of command in historyBufferArray.bufferArr
-    memset(buffer, 0, INPUT_BUF);
 
     int tempIndex = (historyBufferArray.lastCommandIndex + historyId) % MAX_HISTORY;
+    char *src = historyBufferArray.bufferArr[tempIndex];
 
-    memmove(buffer, historyBufferArray.bufferArr[tempIndex], historyBufferArray.lengthsArr[tempIndex]);
+    printf(" %d:  %s\n" ,historyId, src);
+
+    int length = historyBufferArray.lengthsArr[tempIndex];
+    //copy at most INPUT_BUF - 1 characters to leave room for null termination
+    int i;
+    for (i = 0; i <= length && i < INPUT_BUF - 1; i++) {
+        buffer[i] = src[i];
+    }
+    //null terminate the buffer
+    buffer[i] = '\0';
     return 0;
 }
 
