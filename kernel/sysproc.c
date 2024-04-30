@@ -97,8 +97,6 @@ uint64 sys_history(void) {
     int historyId;
     //get the address of the buffer
     argaddr(0, (uint64 *)&buffer);
-    //argptr(0, &buffer);
-
     //get the historyId
     argint(1, &historyId);
 

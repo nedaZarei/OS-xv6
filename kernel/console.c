@@ -331,7 +331,7 @@ void consoleintr(int c) {
                                 uint len = cons.rightmost - cons.r - 1; //length of command to be saved (-1 is for removing the last '\n')
                                 if (len > 0) {
                                     char *command = &cons.buf[cons.r % INPUT_BUF];
-                                    if (len != 7 || strncmp(command, "history", len) != 0) {
+                                    if ((strncmp("history", command , 7) != 0)) {
                                         addToHistory();
                                     }
                                 }
@@ -369,7 +369,7 @@ void consoleintr(int c) {
                         printBuffScreen(historyBufferArray.bufferArr[index],
                                         historyBufferArray.lengthsArr[index]);
                         copyBuffToInputBuff(historyBufferArray.bufferArr[index],
-                                            historyBufferArray.lengthsArr[index]);
+                                            historyBufferArray.lengthsArr[index]); //updating cons
                     }
                     break;
                 case 66: // Down arrow key
@@ -381,7 +381,7 @@ void consoleintr(int c) {
 
                         case 0: //get string from oldBuf
                             deleteLineScreen();
-                            copyBuffToInputBuff(oldBuf, oldBuffLen);
+                            copyBuffToInputBuff(oldBuf, oldBuffLen);//updating cons
                             printBuffScreen(oldBuf, oldBuffLen);
                             historyBufferArray.currentHistory--;
                             break;
@@ -394,7 +394,7 @@ void consoleintr(int c) {
                             printBuffScreen(historyBufferArray.bufferArr[index],
                                             historyBufferArray.lengthsArr[index]);
                             copyBuffToInputBuff(historyBufferArray.bufferArr[index],
-                                                historyBufferArray.lengthsArr[index]);
+                                                historyBufferArray.lengthsArr[index]); //updating cons
                             break;
                     }
                     break;
@@ -423,17 +423,19 @@ consoleinit(void)
 
 //gets called by the sys_history and writes the requested command history in the buffer
 int history(char *buffer, int historyId) {
-    if (historyId < 0 || historyId > MAX_HISTORY - 1)
+    if (historyId < 0 || historyId > MAX_HISTORY - 1){
         return 2;//illegal history id
-    if (historyId >= historyBufferArray.numOfCommmandsInMem)
+    }
+
+    if (historyId >= historyBufferArray.numOfCommmandsInMem){
         return 1;//no history in the historyId given
+    }
 
     //historyId != index of command in historyBufferArray.bufferArr
-
     int tempIndex = (historyBufferArray.lastCommandIndex + historyId) % MAX_HISTORY;
     char *src = historyBufferArray.bufferArr[tempIndex];
 
-    printf(" %d:  %s\n" ,historyBufferArray.numOfCommmandsInMem - historyId, src);
+    printf(" %d:  %s\n" ,historyId, src);
 
     int length = historyBufferArray.lengthsArr[tempIndex];
     //copy at most INPUT_BUF - 1 characters to leave room for null termination
@@ -455,8 +457,9 @@ addToHistory(){
     historyBufferArray.currentHistory = -1; //resetting user's current viewed history
 
     if (historyBufferArray.numOfCommmandsInMem < MAX_HISTORY) {
-        historyBufferArray.numOfCommmandsInMem++; //inserting to the array in a circular manner
+        historyBufferArray.numOfCommmandsInMem++;
     }
+    //inserting to the array in a circular manner
     historyBufferArray.lastCommandIndex = (historyBufferArray.lastCommandIndex - 1) % MAX_HISTORY;
     historyBufferArray.lengthsArr[historyBufferArray.lastCommandIndex] = len;
 

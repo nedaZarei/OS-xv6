@@ -148,17 +148,16 @@ getcmd(char *buf, int nbuf)
 #define INPUT_BUF 128
 char cmdFromHistory[INPUT_BUF]; //this is the buffer that will get the current history command from history
 
-void printHistory() {
-    int i, count = 0;
+void printHistory(int historyId) {
+    printf("requested command:\n");
+    history(cmdFromHistory,historyId);
+
+    printf("\n all the commands in history:\n");
+    int i;
     for (i = 0; i < MAX_HISTORY; i++) {
         // 0 == newest command == historyId (always)
-        if (history(cmdFromHistory, MAX_HISTORY - i - 1) == 0) { // this is the sys call
-            count++;
+        if (history(cmdFromHistory, i) == 0) { // this is the sys call
 
-            if (count < 5)
-                printf("\n");
-            else
-                break;
         }
     }
 }
@@ -205,9 +204,19 @@ main(void)
       continue;
     }
     if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't'
-         && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[7] == '\n') {
-          printf("\nmy history command:\n");
-          printHistory();
+         && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[9] == '\n') {
+        int history_id = buf[8] - '0';
+          printHistory(history_id);
+          continue;
+    }
+    if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't'
+         && buf[4] == 'o' && buf[5] == 'r' && buf[6] == 'y' && buf[10] == '\n') {
+         char number[3];
+         number[0]=buf[8];
+         number[1]=buf[9];
+         number[2] = '\0';
+         int history_id = atoi(number);
+          printHistory(history_id);
           continue;
     }
     if(buf[0] == 't' && buf[1] == 'o' && buf[2] == 'p' && buf[3] == '\n'){
