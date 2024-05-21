@@ -109,6 +109,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
+  uint ctime;  //process creation time
+  uint rtime;  //time spent running
+
   uint8 mlqs;
   uint8 priority;
 };

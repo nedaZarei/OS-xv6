@@ -4,6 +4,9 @@ struct proc_info{
     int pid;
     int ppid;
     char state[16];
+    uint ctime;   //process creation time
+    uint rtime;   //time spent running
+    float cpu_usage; //CPU usage percentage
 };
 struct top{
     long uptime;

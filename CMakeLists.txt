@@ -87,4 +87,5 @@ add_executable(xv6_riscv_
         user/topTest.c
         kernel/topStruct.h
         user/schedTest.c
+        user/toptop.c
 )

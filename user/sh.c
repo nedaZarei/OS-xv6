@@ -1,9 +1,10 @@
 // Shell.
 
-#include "kernel/types.h"
+#include "../kernel/types.h"
 #include "user.h"
-#include "kernel/fcntl.h"
-#include "kernel/topStruct.h"
+#include "../kernel/fcntl.h"
+#include "../kernel/topStruct.h"
+#include "../kernel/stat.h"
 
 
 // Parsed command representation
@@ -161,22 +162,38 @@ void printHistory(int historyId) {
         }
     }
 }
+void clear_screen() {
+    printf("\033[2J\033[1;1H");
+}
 
 void printTop(){
     struct top top_struct;
     top((uint64) &top_struct);
 
-    printf("Total processes: %d  Running processes: %d  Sleeping processes: %d",
-           top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
+    while (1) {
+        top((uint64) &top_struct);
 
-    printf("\nTicks : %ld\n", top_struct.uptime);
+        clear_screen();
+        printf("Total processes: %d  Running processes: %d  Sleeping processes: %d\n",
+               top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
 
-    printf("\nPID   PPID   STATE       NAME\n");
-    for (int i = 0; i < top_struct.total_process; i++) {
-        printf("%d    %d    %s   %s\n",
-               top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
-               top_struct.p_list[i].state, top_struct.p_list[i].name);
+        printf("Uptime : %d\n", top_struct.uptime);
+
+        printf("\nPID   PPID   STATE       NAME    TIME   CPU-USAGE\n");
+        for (int i = 0; i < top_struct.total_process; i++) {
+            printf("%d    %d    %s   %s      %d      %d%%\n",
+                   top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
+                   top_struct.p_list[i].state, top_struct.p_list[i].name,
+                   top_struct.p_list[i].ctime, (int) (top_struct.p_list[i].cpu_usage * 100));
+
+            printf("Running time: %d\n", top_struct.p_list[i].rtime);
+        }
+
+        //sleep for a short period before refreshing
+        sleep(2);
     }
+
+    exit(0);
 }
 ////////////////////////////////////////////////////////////////////////
 
@@ -220,7 +237,6 @@ main(void)
           continue;
     }
     if(buf[0] == 't' && buf[1] == 'o' && buf[2] == 'p' && buf[3] == '\n'){
-          printf("\nmy top command:\n");
           printTop();
           continue;
       }

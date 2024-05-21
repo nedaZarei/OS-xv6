@@ -257,6 +257,10 @@ void consoleintr(int c) {
             } else {
                 //process regular characters
                 switch (c) {
+                    case C('C'):  // Ctrl+C
+                        // send signal to the currently running process to terminate it
+                        setkilled(myproc());
+                        break;
                     case C('P'):  // Print process list.
                         procdump();
                         break;

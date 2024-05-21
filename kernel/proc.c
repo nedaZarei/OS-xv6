@@ -1,12 +1,12 @@
 #include <stddef.h>
 #include "types.h"
-#include "param.h"
 #include "memlayout.h"
 #include "riscv.h"
 #include "spinlock.h"
 #include "defs.h"
 #include "proc.h"
 #include "topStruct.h"
+#include "param.h"
 
 struct cpu cpus[NCPU];
 
@@ -147,6 +147,10 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+
+  p->ctime = ticks;  // set process creation time
+  p->rtime = 0;      // initialize running time
+
   //added for MLQ scheduling
   p->priority = 0;
   p->mlqs = 0;
@@ -526,6 +530,9 @@ scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
         }
         set_timer_interval(id, q);
 
+        // Record the start time
+        uint start_time = ticks;
+
         if (strncmp("test", p->name, 4) == 0) {
             printf("PROCESS THAT ENTERED: %d \n", p->pid);
         }
@@ -535,6 +542,10 @@ scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
+
+        uint end_time = ticks;
+        p->rtime += end_time - start_time;
+
         if (strncmp("test", p->name, 4) == 0) {
             printf("PROCESS THAT EXITED: %d \n", p->pid);
         }
@@ -767,7 +778,7 @@ int top(uint64 tp) {
     struct proc_info *p_info;
 
     //system uptime
-    top_struct.uptime = (long) ticks / 100;
+    top_struct.uptime = (long) ticks;
     //initializing process counters
     top_struct.total_process = 0;
     top_struct.running_process = 0;
@@ -802,6 +813,9 @@ int top(uint64 tp) {
                     break;
             }
             safestrcpy(p_info->name, p->name, sizeof(p_info->name));
+            p_info->ctime = (ticks - p->ctime);
+            p_info->rtime = (p->state == RUNNING) ? (ticks - p->ctime) : p->rtime;
+            p_info->cpu_usage = (float)(p->rtime / ticks);
             //updating process counters
             if (p->state == RUNNING) {
                 top_struct.running_process++;
