@@ -87,3 +87,15 @@ timerinit()
   // enable machine-mode timer interrupts.
   w_mie(r_mie() | MIE_MTIE);
 }
+
+/*
+heart: id of the CPU or core for which the timer quantum is being set.
+quantum: the time quantum to set for the timer, in microseconds.
+the function accesses a global timer_scratch array, which holds timer configuration data for each CPU/core.
+it sets the timer quantum (scratch[4]) for the specified CPU/core to the given interval.
+ */
+void
+set_timer_interval(int heart, uint64 quantum){
+    uint64 *scratch = &timer_scratch[heart][0];
+    scratch[4] = quantum;
+}

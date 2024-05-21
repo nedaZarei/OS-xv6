@@ -147,6 +147,9 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+  //added for MLQ scheduling
+  p->priority = 0;
+  p->mlqs = 0;
 
   return p;
 }
@@ -443,35 +446,108 @@ wait(uint64 addr)
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
+
+
+//void
+//scheduler(void)
+//{
+//  struct proc *p;
+//  struct cpu *c = mycpu();
+//
+//  c->proc = 0;
+//  for(;;){
+//    // Avoid deadlock by ensuring that devices can interrupt.
+//    intr_on();
+//
+//    for(p = proc; p < &proc[NPROC]; p++) {
+//      acquire(&p->lock);
+//      if(p->state == RUNNABLE) {
+//        // Switch to chosen process.  It is the process's job
+//        // to release its lock and then reacquire it
+//        // before jumping back to us.
+//        p->state = RUNNING;
+//        c->proc = p;
+//        swtch(&c->context, &p->context);
+//
+//        // Process is done running for now.
+//        // It should have changed its p->state before coming back.
+//        c->proc = 0;
+//      }
+//      release(&p->lock);
+//    }
+//  }
+//}
+
+
 void
-scheduler(void)
+scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
 {
-  struct proc *p;
+  struct proc *selected = 0;
+  struct proc *p = proc;
   struct cpu *c = mycpu();
-  
+  int id = cpuid();
+
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for(p = proc; p < &proc[NPROC]; p++) {
-      acquire(&p->lock);
+    for (int i = 0; i < NPROC; i++) {
+        if (p >= proc + NPROC) {
+            p = proc;
+        }
       if(p->state == RUNNABLE) {
+          if (!selected || p->mlqs < selected->mlqs ||
+            (p->mlqs == selected->mlqs && p->priority < selected->priority)) {
+              selected = p;
+          }
+      }
+      p++;
+    }
+
+    if (selected != 0) {
+        p = selected;
+        acquire(&p->lock);
+        if(p->state != RUNNABLE) {
+            release(&p->lock);
+            continue;
+        }
+
+        uint64 q;
+        if (p->mlqs == 0) {
+            q = MLQ_Q1_QUANTUM;
+            p->mlqs++;
+        } else if (p->mlqs == 1) {
+            q = MLQ_Q2_QUANTUM;
+            p->mlqs++;
+        } else {
+            q = MLQ_Q3_QUANTUM;
+            p->mlqs = 2;
+        }
+        set_timer_interval(id, q);
+
+        if (strncmp("test", p->name, 4) == 0) {
+            printf("PROCESS THAT ENTERED: %d \n", p->pid);
+        }
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
-
+        if (strncmp("test", p->name, 4) == 0) {
+            printf("PROCESS THAT EXITED: %d \n", p->pid);
+        }
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
-      }
-      release(&p->lock);
+        release(&p->lock);
+        selected = 0;
+        p++;
     }
   }
 }
+
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
