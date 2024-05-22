@@ -95,7 +95,7 @@ the function accesses a global timer_scratch array, which holds timer configurat
 it sets the timer quantum (scratch[4]) for the specified CPU/core to the given interval.
  */
 void
-set_timer_interval(int heart, uint64 quantum){
+set_timer_quantum(int heart, uint64 quantum){
     uint64 *scratch = &timer_scratch[heart][0];
     scratch[4] = quantum;
 }

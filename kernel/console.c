@@ -257,9 +257,12 @@ void consoleintr(int c) {
             } else {
                 //process regular characters
                 switch (c) {
-                    case C('C'):  // Ctrl+C
-                        // send signal to the currently running process to terminate it
-                        setkilled(myproc());
+                    case C('C'):  //ctrl+c
+                        acquire(&myproc()->lock);
+                        if (myproc()->pid != 0) {
+                            myproc()->killed = 1;
+                            //setkilled(myproc());
+                        }
                         break;
                     case C('P'):  // Print process list.
                         procdump();
@@ -406,6 +409,7 @@ void consoleintr(int c) {
             //resetting state after handling escape sequence
             escape_seq_state = 0;
             break;
+
     }
 
     release(&cons.lock);

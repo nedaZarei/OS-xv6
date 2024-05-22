@@ -528,7 +528,7 @@ scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
             q = MLQ_Q3_QUANTUM;
             p->mlqs = 2;
         }
-        set_timer_interval(id, q);
+        set_timer_quantum(id, q);
 
         // Record the start time
         uint start_time = ticks;
@@ -815,7 +815,7 @@ int top(uint64 tp) {
             safestrcpy(p_info->name, p->name, sizeof(p_info->name));
             p_info->ctime = (ticks - p->ctime);
             p_info->rtime = (p->state == RUNNING) ? (ticks - p->ctime) : p->rtime;
-            p_info->cpu_usage = (float)(p->rtime / ticks);
+            p_info->cpu_usage = ((float)p->rtime /(float)ticks);
             //updating process counters
             if (p->state == RUNNING) {
                 top_struct.running_process++;

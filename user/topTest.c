@@ -17,7 +17,7 @@ int main(int argc, char **argv){
         printf("%d    %d    %s   %s      %d      %d%%\n",
                 top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
                 top_struct.p_list[i].state, top_struct.p_list[i].name,
-                top_struct.p_list[i].ctime, (int) (top_struct.p_list[i].cpu_usage *100));
+                top_struct.p_list[i].ctime, (int) (top_struct.p_list[i].cpu_usage *100.0));
 
         printf("running time: %d\n", top_struct.p_list[i].rtime);
     }

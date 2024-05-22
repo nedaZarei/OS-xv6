@@ -6,7 +6,7 @@
 
 
 void clear_screen() {
-    printf("\033[2J\033[1;1H");
+    printf("\033[H\033[2J"); //clear screen and move cursor to top-left corner
 }
 
 int main(int argc, char **argv) {
@@ -21,19 +21,17 @@ int main(int argc, char **argv) {
 
         printf("Uptime : %d\n", top_struct.uptime);
 
-        printf("\nPID   PPID   STATE       NAME    TIME   CPU-USAGE\n");
+        printf("\nPID   PPID   STATE       NAME    TIME   %CPU\n");
         for (int i = 0; i < top_struct.total_process; i++) {
             printf("%d    %d    %s   %s      %d      %d%%\n",
                    top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
                    top_struct.p_list[i].state, top_struct.p_list[i].name,
-                   top_struct.p_list[i].ctime, (int) (top_struct.p_list[i].cpu_usage * 100));
+                   top_struct.p_list[i].ctime, (int) (top_struct.p_list[i].cpu_usage * 100.0));
 
-            printf("Running time: %d\n", top_struct.p_list[i].rtime);
+            printf("running time: %d\n", top_struct.p_list[i].rtime);
         }
 
         //sleep for a short period before refreshing
-        sleep(2);
+        sleep(5);
     }
-
-    exit(0);
 }
