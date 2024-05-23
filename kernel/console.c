@@ -259,10 +259,11 @@ void consoleintr(int c) {
                 switch (c) {
                     case C('C'):  //ctrl+c
                         acquire(&myproc()->lock);
-                        if (myproc()->pid != 0) {
+                        if (myproc() != 0) {
                             myproc()->killed = 1;
                             //setkilled(myproc());
                         }
+                        release(&myproc()->lock);
                         break;
                     case C('P'):  // Print process list.
                         procdump();

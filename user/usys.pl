@@ -38,3 +38,4 @@ entry("sleep");
 entry("uptime");
 entry("history");
 entry("top");
+entry("fgproc");

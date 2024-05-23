@@ -26,6 +26,7 @@ int sleep(int);
 int uptime(void);
 int history(char*, int);
 int top(uint64);
+int fgproc(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

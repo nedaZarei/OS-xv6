@@ -115,3 +115,10 @@ uint64 sys_top(void) {
     argaddr(0, &top_struct);
     return top(top_struct);
 }
+
+//adding a system call fgproc() to handle the SIGINT interrupt.
+uint64
+sys_fgproc(void)
+{
+    return fgproc();
+}

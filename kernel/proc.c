@@ -832,3 +832,18 @@ int top(uint64 tp) {
     else
         return 0;
 }
+//for handling the SIGINT interrupt.
+int fgproc(void){
+    struct proc *p;
+    for(p =proc; p < &proc[NPROC]; p++)
+    {
+        if(p!=initproc && p->pid!=2)
+        {
+            printf("\nCtrl + C detected\n");
+            p->killed=1;
+            kill(p->pid);
+            break;
+        }
+    }
+    return 24;
+}

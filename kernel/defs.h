@@ -112,6 +112,7 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 uint64          sys_uptime(void);
 int             top(uint64);
+int             fgproc(void);
 
 
 // swtch.S

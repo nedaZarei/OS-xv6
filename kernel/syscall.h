@@ -22,4 +22,5 @@
 #define SYS_close  21
 #define SYS_history 22
 #define SYS_top  23
+#define SYS_fgproc 24
 
