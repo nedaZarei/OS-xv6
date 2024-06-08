@@ -153,7 +153,7 @@ found:
 
   //added for MLQ scheduling
   p->priority = 0;
-  p->mlqs = 0;
+  p->queue_level = 0;
 
   return p;
 }
@@ -450,15 +450,13 @@ wait(uint64 addr)
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
-
-
 //void
 //scheduler(void)
 //{
 //  struct proc *p;
 //  struct cpu *c = mycpu();
 //
-//  c->proc = 0;
+//  c->proc = 0; //no process is currently running on this cpu
 //  for(;;){
 //    // Avoid deadlock by ensuring that devices can interrupt.
 //    intr_on();
@@ -475,34 +473,33 @@ wait(uint64 addr)
 //
 //        // Process is done running for now.
 //        // It should have changed its p->state before coming back.
-//        c->proc = 0;
+//        c->proc = 0; //after the process finishes or yields the cpu
 //      }
 //      release(&p->lock);
 //    }
 //  }
 //}
-
-
 void
 scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
 {
-  struct proc *selected = 0;
+  struct proc *selected = 0; //pointer to the selected process to be scheduled
   struct proc *p = proc;
   struct cpu *c = mycpu();
   int id = cpuid();
 
-  c->proc = 0;
+  c->proc = 0; //no process is currently running on this cpu
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for (int i = 0; i < NPROC; i++) {
+    for (int i = 0; i < NPROC; i++) { //iterates over all processes to find a runnable process to select
         if (p >= proc + NPROC) {
-            p = proc;
+            p = proc; //resetting p to the start of the process table if it reaches the end
         }
       if(p->state == RUNNABLE) {
-          if (!selected || p->mlqs < selected->mlqs ||
-            (p->mlqs == selected->mlqs && p->priority < selected->priority)) {
+          if (!selected || p->queue_level < selected->queue_level ||
+              (p->queue_level == selected->queue_level && p->priority < selected->priority)) {
+              //process with the lowest queue_level value (highest priority queue) and lowest priority value is selected
               selected = p;
           }
       }
@@ -518,23 +515,23 @@ scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
         }
 
         uint64 q;
-        if (p->mlqs == 0) {
+        if (p->queue_level == 0) {
             q = MLQ_Q1_QUANTUM;
-            p->mlqs++;
-        } else if (p->mlqs == 1) {
+            p->queue_level++;
+        } else if (p->queue_level == 1) {
             q = MLQ_Q2_QUANTUM;
-            p->mlqs++;
+            p->queue_level++;
         } else {
             q = MLQ_Q3_QUANTUM;
-            p->mlqs = 2;
+            p->queue_level = 2;
         }
         set_timer_quantum(id, q);
 
-        // Record the start time
+        //record the start time
         uint start_time = ticks;
 
-        if (strncmp("test", p->name, 4) == 0) {
-            printf("PROCESS THAT ENTERED: %d \n", p->pid);
+        if (strncmp("schedTest", p->name, 4) == 0) {
+            printf("PROCESS THAT ENTERED:  %d \n", p->pid);
         }
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
@@ -543,11 +540,13 @@ scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
         c->proc = p;
         swtch(&c->context, &p->context);
 
+        //record the end time
         uint end_time = ticks;
+        //updating running time for this process
         p->rtime += end_time - start_time;
 
-        if (strncmp("test", p->name, 4) == 0) {
-            printf("PROCESS THAT EXITED: %d \n", p->pid);
+        if (strncmp("schedTest", p->name, 4) == 0) {
+            printf("PROCESS THAT EXITED:  %d \n", p->pid);
         }
         // Process is done running for now.
         // It should have changed its p->state before coming back.
@@ -559,7 +558,6 @@ scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
   }
 }
 
-
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
 // intena because intena is a property of this
@@ -570,24 +568,32 @@ scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
 void
 sched(void)
 {
-  int intena;
+    //handles the context switch from a running process back to the scheduler.
+    // it ensures the process is not holding any locks except its own and
+    // saves/restores interrupt state
+  int intena; //were interrupts enabled before push_off()?
   struct proc *p = myproc();
 
-  if(!holding(&p->lock))
-    panic("sched p->lock");
-  if(mycpu()->noff != 1)
-    panic("sched locks");
-  if(p->state == RUNNING)
-    panic("sched running");
-  if(intr_get())
-    panic("sched interruptible");
+    if(!holding(&p->lock))
+        panic("sched p->lock");
+    if(mycpu()->noff != 1)
+        panic("sched locks");
+    if(p->state == RUNNING)
+        panic("sched running");
+    if(intr_get())
+        panic("sched interruptible");
 
-  intena = mycpu()->intena;
-  swtch(&p->context, &mycpu()->context);
+  intena = mycpu()->intena; //saves interrupt enable state of cpu
+  swtch(&p->context, &mycpu()->context); //curr process -> scheduler
+  //after the context switch,cpu is now running the scheduler code instead of the process code
   mycpu()->intena = intena;
 }
 
 // Give up the CPU for one scheduling round.
+// is called by a process to voluntarily give up the cpu,
+// putting itself back into the RUNNABLE state and invoking the scheduler.
+//when : handle an interrupt, exception, or system call from user space
+//or : return to user space
 void
 yield(void)
 {
@@ -778,7 +784,7 @@ int top(uint64 tp) {
     struct proc_info *p_info;
 
     //system uptime
-    top_struct.uptime = (long) ticks;
+    top_struct.uptime = (long) (ticks/ 10); //cycles: about 1/10th second in qemu
     //initializing process counters
     top_struct.total_process = 0;
     top_struct.running_process = 0;
@@ -813,7 +819,7 @@ int top(uint64 tp) {
                     break;
             }
             safestrcpy(p_info->name, p->name, sizeof(p_info->name));
-            p_info->ctime = (ticks - p->ctime);
+            p_info->time = (ticks - p->ctime)/10;
             p_info->rtime = (p->state == RUNNING) ? (ticks - p->ctime) : p->rtime;
             p_info->cpu_usage = ((float)p->rtime /(float)ticks);
             //updating process counters
@@ -832,12 +838,12 @@ int top(uint64 tp) {
     else
         return 0;
 }
-//for handling the SIGINT interrupt.
+//for handling the SIGINT interrupt
 int fgproc(void){
     struct proc *p;
     for(p =proc; p < &proc[NPROC]; p++)
     {
-        if(p!=initproc && p->pid!=2)
+        if(p!=initproc && p->pid!=2) //skipping the initial process and the process with PID 2, which is usually the init process in xv6
         {
             printf("\nCtrl + C detected\n");
             p->killed=1;

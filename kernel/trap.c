@@ -177,7 +177,7 @@ clockintr()
 int
 devintr()
 {
-  uint64 scause = r_scause();
+  uint64 scause = r_scause(); //scause register: contains information about the cause of the interrupt or exception
 
   if((scause & 0x8000000000000000L) &&
      (scause & 0xff) == 9){

@@ -249,7 +249,7 @@ void consoleintr(int c) {
     uint index;
 
     static int escape_seq_state = 0;
-    int dofgproc = 0;
+    int ctrlC_flag = 0;
 
     switch (escape_seq_state) {
         case 0: //initial state
@@ -259,7 +259,7 @@ void consoleintr(int c) {
                 //process regular characters
                 switch (c) {
                     case C('C'):  //ctrl+c
-                        dofgproc=1;
+                        ctrlC_flag=1;
                         break;
                     case C('P'):  // Print process list.
                         procdump();
@@ -410,7 +410,7 @@ void consoleintr(int c) {
     }
 
     release(&cons.lock);
-    if(dofgproc)
+    if(ctrlC_flag)
     {
         fgproc();
     }

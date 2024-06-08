@@ -89,13 +89,13 @@ timerinit()
 }
 
 /*
-heart: id of the CPU or core for which the timer quantum is being set.
+id: id of the cpu or core for which the timer quantum is being set.
 quantum: the time quantum to set for the timer, in microseconds.
-the function accesses a global timer_scratch array, which holds timer configuration data for each CPU/core.
-it sets the timer quantum (scratch[4]) for the specified CPU/core to the given interval.
+the function accesses a global timer_scratch array, which holds timer configuration data for each cpu/core.
+it sets the timer quantum (scratch[4]) for the specified CPU/core to the given interval(id).
  */
 void
-set_timer_quantum(int heart, uint64 quantum){
-    uint64 *scratch = &timer_scratch[heart][0];
+set_timer_quantum(int id, uint64 quantum){
+    uint64 *scratch = &timer_scratch[id][0];
     scratch[4] = quantum;
 }

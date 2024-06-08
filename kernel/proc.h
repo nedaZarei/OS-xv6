@@ -112,7 +112,7 @@ struct proc {
   uint ctime;  //process creation time
   uint rtime;  //time spent running
 
-  uint8 mlqs;
-  uint8 priority;
+  uint8 queue_level; //multi-level queue status : higher priority queue -> lower queue_level value
+  uint8 priority; //lower priority value -> actual higher priority
 };
 

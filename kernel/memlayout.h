@@ -66,7 +66,7 @@
 //   TRAMPOLINE (the same page as in the kernel)
 #define TRAPFRAME (TRAMPOLINE - PGSIZE)
 
-#define RR_INTERVAL 1000000
-#define MLQ_Q1_QUANTUM RR_INTERVAL
+#define RR_Q 1000000 //(ticks) arbitrary yet practical number for defining time slices in the scheduler
+#define MLQ_Q1_QUANTUM RR_Q
 #define MLQ_Q2_QUANTUM (MLQ_Q1_QUANTUM * 2)
 #define MLQ_Q3_QUANTUM (MLQ_Q2_QUANTUM * 2)

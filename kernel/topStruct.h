@@ -6,6 +6,7 @@ struct proc_info{
     char state[16];
     uint ctime;   //process creation time
     uint rtime;   //time spent running
+    uint time;
     float cpu_usage; //CPU usage percentage
 };
 struct top{
