@@ -32,6 +32,6 @@ int main(int argc, char **argv) {
         }
 
         //sleep for a short period before refreshing
-        sleep(5);
+        sleep(2);
     }
 }

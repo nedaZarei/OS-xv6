@@ -479,6 +479,7 @@ wait(uint64 addr)
 //    }
 //  }
 //}
+
 void
 scheduler(void) //multi-level queue (0: RR-5 /1: RR-10 /2: RR-20)
 {
@@ -571,7 +572,7 @@ sched(void)
     //handles the context switch from a running process back to the scheduler.
     // it ensures the process is not holding any locks except its own and
     // saves/restores interrupt state
-  int intena; //were interrupts enabled before push_off()?
+  int intena;
   struct proc *p = myproc();
 
     if(!holding(&p->lock))
@@ -784,7 +785,7 @@ int top(uint64 tp) {
     struct proc_info *p_info;
 
     //system uptime
-    top_struct.uptime = (long) (ticks/ 10); //cycles: about 1/10th second in qemu
+    top_struct.uptime = (long) (ticks/ 100); //cycles: about 1/10th second in qemu
     //initializing process counters
     top_struct.total_process = 0;
     top_struct.running_process = 0;
@@ -819,7 +820,7 @@ int top(uint64 tp) {
                     break;
             }
             safestrcpy(p_info->name, p->name, sizeof(p_info->name));
-            p_info->time = (ticks - p->ctime)/10;
+            p_info->time = (ticks - p->ctime)/100;
             p_info->rtime = (p->state == RUNNING) ? (ticks - p->ctime) : p->rtime;
             p_info->cpu_usage = ((float)p->rtime /(float)ticks);
             //updating process counters
