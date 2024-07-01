@@ -24,7 +24,6 @@ struct {
 } kmem;
 
 #define ID_IN_REFCOUNT_ARRAY(pa) (((pa) - KERNBASE) / PGSIZE)
-
 static struct {
     struct spinlock lock;
     int ref_count[ID_IN_REFCOUNT_ARRAY(PHYSTOP)]; //array to store count of references to each page

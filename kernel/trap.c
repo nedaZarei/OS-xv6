@@ -67,6 +67,40 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
+  }else if(r_scause()== 15){ //15 is the riscv pagefault
+      // process pagetable
+      pagetable_t my_pagetable =p->pagetable;
+
+      //virtual address error handling
+      if (r_stval()>=MAXVA){
+          p->killed = 1;
+          exit(-1);
+      }
+      pte_t *my_pte = walk(my_pagetable, r_stval(), 0); //getting pte from virtual address
+      uint64 pa = PTE2PA(*my_pte); //old page (physical page)
+
+      uint flags;
+      char *mem; //new page
+
+      //new page flag
+      flags = PTE_FLAGS(*my_pte);
+      flags |= PTE_W; //writeable flag 1
+      flags &= ~PTE_COW; //COW flag 0
+
+      if((mem = kalloc()) == 0){
+          //no available memory so exit
+          p->killed=1;
+          exit(-1);
+      }
+
+      //copy old page to new
+      memmove(mem, (char*)pa, PGSIZE);
+      //new page to a pte
+      *my_pte = PA2PTE(mem) | flags;
+
+      kfree((char*)pa); //decreasing the counter or delete the page accordingly
+      p->trapframe->epc = r_sepc(); //restart the instruction
+
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
@@ -77,7 +111,7 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2  && (myproc()->pid == 1 || myproc()->pid == 2) )
     yield();
 
   usertrapret();
@@ -151,7 +185,7 @@ kerneltrap()
   }
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
+  if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING  && (myproc()->pid == 1 || myproc()->pid == 2))
     yield();
 
   // the yield() may have caused some traps to occur,

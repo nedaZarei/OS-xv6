@@ -135,6 +135,7 @@ UPROGS=\
 	$U/_topTest\
 	$U/_toptop\
 	$U/_schedTest\
+	$U/_forkcow_test\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

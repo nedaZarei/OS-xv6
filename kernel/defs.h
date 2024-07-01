@@ -1,3 +1,5 @@
+#include "memlayout.h"
+
 struct buf;
 struct context;
 struct file;

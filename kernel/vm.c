@@ -308,22 +308,33 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   pte_t *pte;
   uint64 pa, i;
   uint flags;
-  char *mem;
+//  char *mem;
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walk(old, i, 0)) == 0)
       panic("uvmcopy: pte should exist");
     if((*pte & PTE_V) == 0)
       panic("uvmcopy: page not present");
-    pa = PTE2PA(*pte);
-    flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
-      goto err;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
+
+    if (*pte & PTE_W) { //for writable page initialize:
+        *pte &= ~PTE_W; //PTE_W = 0
+        *pte |= PTE_COW; //PTE_COW = 1
+    }
+
+    pa = PTE2PA(*pte); //physical page address
+    flags = PTE_FLAGS(*pte); //setting the same flags for the child
+
+//    if((mem = kalloc()) == 0)
+//      goto err;
+//    memmove(mem, (char*)pa, PGSIZE);
+
+    if(mappages(new, i, PGSIZE, pa, flags) != 0){ // the same physical page
       goto err;
     }
+    //incrementing the reference counter
+    kref_lock();
+    inc_ref_count(pa);
+    kref_unlock();
   }
   return 0;
 
@@ -354,7 +365,44 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
   uint64 n, va0, pa0;
 
   while(len > 0){
-    va0 = PGROUNDDOWN(dstva);
+      va0 = PGROUNDDOWN(dstva);
+
+      //error handling for the virtual address
+      if (va0>=MAXVA){
+          return -1;
+      }
+
+      pte_t *my_pte = walk(pagetable, va0, 0);
+
+      if ( my_pte==0|| (*my_pte& PTE_U)==0 ||(*my_pte & PTE_V)==0 ){
+          return -1;
+      }
+
+      //if it's a COW page
+      if (*my_pte & PTE_COW) {
+
+          uint flags;
+          char *mem;
+          uint64 pa = PTE2PA(*my_pte);
+
+          flags = PTE_FLAGS(*my_pte);
+          flags |= PTE_W; // writeable flag to 1
+          flags &= ~PTE_COW; // COW flag to 0
+
+          if ((mem = kalloc()) == 0) {
+              //if no available memory then exit
+              exit(-1);
+          }
+
+          //copy the old page
+          memmove(mem, (char *) pa, PGSIZE);
+
+          //set the new page to the pte
+          *my_pte = PA2PTE(mem) | flags;
+
+          kfree((char *) pa); //decreasing the counter or delete the page
+      }
+
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)
       return -1;

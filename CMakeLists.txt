@@ -88,4 +88,5 @@ add_executable(xv6_riscv_
         kernel/topStruct.h
         user/schedTest.c
         user/toptop.c
+        user/forkcow_test.c
 )
