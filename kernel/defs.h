@@ -73,6 +73,8 @@ uint64          inc_ref_count(uint64 pa);
 uint64          dec_ref_count(uint64 pa);
 void            kref_lock();
 void            kref_unlock();
+long            totalram(void);
+long            freeram(void);
 
 // log.c
 void            initlog(int, struct superblock*);

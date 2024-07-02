@@ -8,6 +8,7 @@ struct proc_info{
     uint rtime;   //time spent running
     uint time;
     float cpu_usage; //CPU usage percentage
+    //uint mem_usage_percent; //percentage
 };
 struct top{
     long uptime;
@@ -17,4 +18,8 @@ struct top{
     // a list of proc info including:
     // pid, parent pid, state of proc(running,sleeping,runnable,unused), name of proc
     struct proc_info p_list[NPROC];
+    //bytes
+    uint total_mem;
+    uint used_mem;
+    uint free_mem;
 };
