@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
         printf("Total processes: %d  Running processes: %d  Sleeping processes: %d\n",
                top_struct.total_process, top_struct.running_process, top_struct.sleeping_process);
 
-        printf("Uptime : %l seconds\n", top_struct.uptime);
+        printf("Uptime : %d seconds\n", top_struct.uptime);
 
         printf("\nPID   PPID   STATE       NAME    TIME(s)   %CPU   %MEM\n");
         for (int i = 0; i < top_struct.total_process; i++) {
@@ -30,10 +30,9 @@ int main(int argc, char **argv) {
                    top_struct.p_list[i].mem_usage_percent*/ );
         }
         printf("----------------------------------------------------------------\n");
-        printf("MEMORY STATISTICS:\n");
-        printf("total : %d bytes\n", top_struct.total_mem);
-        printf("used : %d bytes\n", top_struct.used_mem);
-        printf("free : %d bytes\n", top_struct.free_mem);
+        printf("MEMORY STATISTICS:\n\n");
+        printf("total memory : %d bytes\n", top_struct.total_mem);
+        printf("memory usage : 0.%d %%\n", (int)(top_struct.used_mem * 100000 / top_struct.total_mem) );
         printf("----------------------------------------------------------------\n");
         //sleep for a short period before refreshing
         sleep(2);

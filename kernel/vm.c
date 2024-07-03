@@ -84,7 +84,7 @@ kvminithart()
 //    0..11 -- 12 bits of byte offset within the page.
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc)
-{
+{//traverses the page table hierarchy to locate PTE corresponding to a given virtual address (va)
     if(va >= MAXVA)
         panic("walk");
 
@@ -95,11 +95,14 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
         } else {
             if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
                 return 0;
+            //f the PTE is invalid and alloc is true,
+            // a new page table page is allocated using kalloc()
+            // the new page table is then zeroed out using memset
             memset(pagetable, 0, PGSIZE);
-            *pte = PA2PTE(pagetable) | PTE_V;
+            *pte = PA2PTE(pagetable) | PTE_V; //PTE is updated to point to the new page table with the PTE_V flag set
         }
     }
-    return &pagetable[PX(0, va)];
+    return &pagetable[PX(0, va)];//returns the address of the PTE at the level-0 page table that corresponds to the virtual address
 }
 
 // Look up a virtual address, return the physical address,
@@ -310,8 +313,8 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
     uint flags;
 //  char *mem;
 
-    for(i = 0; i < sz; i += PGSIZE){
-        if((pte = walk(old, i, 0)) == 0)
+    for(i = 0; i < sz; i += PGSIZE){ //sz: size of the memory to be copied (bytes)
+        if((pte = walk(old, i, 0)) == 0) // retrieves the PTE for the current page from the old page table
             panic("uvmcopy: pte should exist");
         if((*pte & PTE_V) == 0)
             panic("uvmcopy: page not present");
@@ -328,7 +331,8 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 //      goto err;
 //    memmove(mem, (char*)pa, PGSIZE);
 
-        if(mappages(new, i, PGSIZE, pa, flags) != 0){ // the same physical page
+        if(mappages(new, i, PGSIZE, pa, flags) != 0){
+            // maps the same physical page to the virtual address in the new page table with the same flags
             goto err;
         }
         //incrementing the reference counter

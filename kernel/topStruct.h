@@ -21,5 +21,4 @@ struct top{
     //bytes
     uint total_mem;
     uint used_mem;
-    uint free_mem;
 };

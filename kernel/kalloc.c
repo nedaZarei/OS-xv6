@@ -118,7 +118,7 @@ kalloc(void)
 
     if(r){
         set_ref_count((uint64) r, 1);
-        memset((char *) r, 5, PGSIZE); // fill with junk
+        memset((char *) r, 7, PGSIZE); // fill with junk
     }
     return (void*)r;
 }

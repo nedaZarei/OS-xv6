@@ -788,7 +788,7 @@ int top(uint64 tp) {
     struct proc_info *p_info;
 
     //system uptime
-    top_struct.uptime = (long) (ticks/ 100); //cycles: about 1/10th second in qemu
+    top_struct.uptime = (long) (ticks/ 10); //cycles: about 1/10th second in qemu
     top_struct.total_process = 0;
     top_struct.running_process = 0;
     top_struct.sleeping_process = 0;
@@ -800,8 +800,6 @@ int top(uint64 tp) {
 
     top_struct.total_mem = total_mem;
     top_struct.used_mem = used_mem;
-    top_struct.free_mem = free_mem;
-
 
     //filling in process information
     for (p =proc, p_info = top_struct.p_list; p < &proc[NPROC]; p++) {
@@ -842,8 +840,7 @@ int top(uint64 tp) {
                 top_struct.sleeping_process++;
             }
 
-            //used_mem += p->sz; //sz is the process memory usage (bytes)
-            //p_info->mem_usage_percent = (p->sz / top_struct.total_mem) * 100;
+            //p_info->mem_usage_percent = (p->sz * 100 / total_mem); //sz is the process memory usage (bytes);
 
             p_info++;
         }

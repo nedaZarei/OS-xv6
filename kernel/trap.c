@@ -65,13 +65,13 @@ usertrap(void)
         intr_on();
 
         syscall();
-    } else if((which_dev = devintr()) != 0){
+    }else if((which_dev = devintr()) != 0){
         // ok
     }else if(r_scause()== 15){ //15 is the riscv pagefault
         if (killed(p))
             exit(-1);
 
-        // process pagetable
+        //process pagetable
         pagetable_t my_pagetable =p->pagetable;
 
         //virtual address error handling
@@ -80,6 +80,7 @@ usertrap(void)
             exit(-1);
         }
         pte_t *my_pte = walk(my_pagetable, r_stval(), 0); //getting pte from virtual address
+        //r_stval() provides the virtual address that caused the page fault
         if (my_pte == 0)
             exit(-1);
 
@@ -100,9 +101,9 @@ usertrap(void)
         flags |= PTE_W; //writeable flag 1
         flags &= ~PTE_COW; //COW flag 0
 
-        //copy old page to new
+        //copies the content from the old page (pointed to by pa) to the new page (mem)
         memmove(mem, (char*)pa, PGSIZE);
-        //new page to a pte
+        //updates the PTE (*my_pte) to point to the new physical page (PA2PTE(mem)) with updated flags (flags)
         *my_pte = PA2PTE(mem) | flags;
 
         kfree((char*)pa); //decreasing the counter or delete the page accordingly
