@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
             printf(" %d    %d    %s     %s      %d       %d%%      %d%%\n",
                    top_struct.p_list[i].pid, top_struct.p_list[i].ppid,
                    top_struct.p_list[i].state, top_struct.p_list[i].name,
-                   top_struct.p_list[i].time, (int) (top_struct.p_list[i].cpu_usage * 100.0)/*,
-                   top_struct.p_list[i].mem_usage_percent*/ );
+                   top_struct.p_list[i].time, (int) (top_struct.p_list[i].cpu_usage * 100.0),
+                   top_struct.p_list[i].mem_usage_percent );
         }
         printf("----------------------------------------------------------------\n");
         printf("MEMORY STATISTICS:\n\n");

@@ -8,7 +8,7 @@ struct proc_info{
     uint rtime;   //time spent running
     uint time;
     float cpu_usage; //CPU usage percentage
-    //uint mem_usage_percent; //percentage
+    uint mem_usage_percent; //percentage
 };
 struct top{
     long uptime;

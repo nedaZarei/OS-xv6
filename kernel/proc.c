@@ -840,7 +840,7 @@ int top(uint64 tp) {
                 top_struct.sleeping_process++;
             }
 
-            //p_info->mem_usage_percent = (p->sz * 100 / total_mem); //sz is the process memory usage (bytes);
+            p_info->mem_usage_percent = (p->sz * 100 / total_mem); //sz is the process memory usage (bytes);
 
             p_info++;
         }
